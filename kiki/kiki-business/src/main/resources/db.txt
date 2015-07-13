@@ -1,0 +1,33 @@
+20140815 lim
+#八种分类转成五种
+update app_content set category='activity' where  category='art';
+update app_content set category='model' where  category='special';
+select * from app_content GROUP BY category;
+
+/**
+已经更新到线上20140821 lim
+alter TABLE `app_reference` add  `app_content_ref` int(12) DEFAULT NULL;
+alter TABLE `app_reference` add `lng` double DEFAULT NULL COMMENT '经度';
+alter TABLE `app_reference` add   `lat` double DEFAULT NULL COMMENT '纬度';
+alter TABLE `app_reference` add   `city_id` varchar(64) DEFAULT NULL COMMENT 'mongo表里面的城市ID';
+alter TABLE `app_reference` add   `city_name` varchar(64) DEFAULT NULL COMMENT '城市名称';
+*/
+
+//文章（三种，文章、活动、同城）、新增加“下线时间”的概念 对应的接口修改  20140822线上未更新
+alter TABLE `app_content` add `publish_end` datetime DEFAULT NULL COMMENT '下线时间';
+//把app_apply里面的user_name类型改一下,20141015,crm里面对应的同城报名管理也要修改一下显示
+alter TABLE `app_apply` modify   column `user_name` blob;
+
+//app四期下添加字段
+-- Set the date after start date to these activity cotents whose end date is null, added by Brady
+UPDATE app_content SET action_end_date = DATE_ADD(DATE(publish_time), INTERVAL 30 DAY) WHERE content_type = 'article' AND action_end_date IS NULL;
+ALTER TABLE `app_content`
+ADD COLUMN `removeDup`  int(11) NULL DEFAULT NULL AFTER `activity_recommend_Timer`;
+ALTER TABLE `app_content`
+ADD COLUMN `user_limit`  int(11) NULL DEFAULT 1 AFTER `removeDup`;
+ALTER TABLE `app_order_info`
+ADD COLUMN `buyer_email`  varchar(300) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `timestamp`,
+ADD COLUMN `buyer_pay_id`  varchar(300) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `buyer_email`,
+ADD COLUMN `tradeWay`  int(11) NULL DEFAULT NULL COMMENT '/支付方式  0:未支付; 1:支付宝支付; 2:微信支付' AFTER `buyer_pay_id`;
+ALTER TABLE `app_order_refund`
+ADD COLUMN `refund_way`  varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '退款途径（如：原路返回）' AFTER `order_detail_id`;

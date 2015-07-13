@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.1.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean id="mongoOptions" class="com.kiki.core.framework.morphia.bean.MongoOptionsFactoryBean">
+		<!-- 连接池最小值 ，默认0-->
+		<property name="minConnectionsPerHost" value="10" />
+		<!-- 连接池最大值，默认100 -->
+		<property name="connectionsPerHost" value="100" />
+		<!-- 连接请求等待队列倍数，最大等待队列 = 连接池最大值 * 倍数 -->
+		<property name="threadsAllowedToBlockForConnectionMultiplier" value="20" />
+		<!-- 最大服务器最大等待时间，默认 30,000 毫秒 -->
+		<property name="serverSelectionTimeout" value="30000" />
+		<!-- 连接请求最大等待时间，默认 120,000 毫秒 -->
+		<property name="maxWaitTime" value="120000" />
+		<!-- 线程池中连接最大闲置时间（超时连接会被重建），默认 0 不会超时 -->
+		<property name="maxConnectionIdleTime" value="0" />
+		<!-- 线程池中连接最大生存时间（超时连接会被重建），默认 0 不会超时 -->
+		<property name="maxConnectionLifeTime" value="0" />
+		<!-- 连接超时时间，默认 10,000 毫秒，0 不会超时 -->
+		<property name="connectTimeout" value="0" />
+		<!-- socket 超时时间，默认 0 不会超时 -->
+		<property name="socketTimeout" value="0" />
+		<!-- socket 保持有效，默认 false -->
+		<property name="socketKeepAlive" value="false" />
+	</bean>
+	
+	<!-- 通过工厂Bean创建mongo连接实例,没有密码就把username和password属性删除了-->
+	<!-- 使用工厂创建mongo实例 -->
+	<bean id="mongo" class="com.kiki.core.framework.morphia.bean.MongoFactoryBean">
+		<property name="mongoOptions" ref="mongoOptions" />
+		<property name="database" value="${mongo.dbName}" />
+		<property name="userName" value="${mongo.username}" />
+		<property name="password" value="${mongo.password}" />
+		<property name="readSecondary" value="false" />
+		<property name="writeConcern" value="SAFE" />
+		<property name="serverStrings">
+			<value>${mongo.url}</value>
+			<!--<value>127.0.0.1:27017, 127.0.0.1:27018</value> -->
+		</property>
+	</bean>
+
+	<!-- 使用工厂创建morphia实例，同时完成类映射操作 -->
+	<bean id="morphia" class="com.kiki.core.framework.morphia.bean.MorphiaFactoryBean">
+		<property name="mapPackages">
+			<array>
+				<value>com.kiki.easy.entity</value>
+			</array>
+		</property>
+	</bean>
+
+	<!-- 使用工厂创建mongoDatastore，同时完成index和caps的确认操作 -->
+	<bean id="datastore" class="com.kiki.core.framework.morphia.bean.DatastoreFactoryBean">
+		<property name="morphia" ref="morphia" />
+		<property name="mongo" ref="mongo" />
+		<property name="dbName" value="${mongo.dbName}" />
+		<property name="toEnsureIndexes" value="true" />
+		<property name="toEnsureCaps" value="true" />
+	</bean>
+
+</beans>
